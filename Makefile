@@ -18,6 +18,8 @@ CFLAGS += -I include
 
 LD := clang
 LDFLAGS :=
+LDFLAGS += -pthread
+LDFLAGS += -lncurses
 
 LIBLOKATT := out/.liblokatt/liblokatt.a
 LOKATT_BINARY := out/lokatt
