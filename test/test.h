@@ -19,6 +19,7 @@ extern const struct test __start_test_section, __stop_test_section;
                 #namespace, #name, lokatt_test_##namespace##name};             \
         static void lokatt_test_##namespace##name()
 
+#define EXIT_VALGRIND 126
 #define EXIT_SKIPPED 127
 
 #define ASSERT_EQ(expr, value)                                                 \

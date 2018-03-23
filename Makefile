@@ -54,7 +54,10 @@ out/.lokatt/%.o: lokatt/%.c | out/.lokatt
 all: $(TEST_BINARY) $(LOKATT_BINARY)
 
 test: $(TEST_BINARY)
-	@$(TEST_BINARY)
+	@$(TEST_BINARY) $(T)
+
+test-valgrind:
+	@valgrind -q --trace-children=yes --leak-check=full --show-reachable=yes --error-exitcode=126 $(TEST_BINARY) $(T)
 
 run: $(LOKATT_BINARY)
 	@$(LOKATT_BINARY)
