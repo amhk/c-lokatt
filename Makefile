@@ -58,6 +58,7 @@ out/.lokatt/%.o: lokatt/%.c | out/.lokatt
 
 all: $(TEST_BINARY) $(LOKATT_BINARY)
 
+.PHONY: test
 test: $(TEST_BINARY)
 	@$(TEST_BINARY) $(T)
 
