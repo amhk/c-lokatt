@@ -21,6 +21,11 @@ LDFLAGS :=
 LDFLAGS += -pthread
 LDFLAGS += -lncurses
 
+VALGRIND := valgrind
+VALGRIND_FLAGS :=
+VALGRIND_FLAGS += -q --trace-children=yes --error-exitcode=126
+VALGRIND_FLAGS += --leak-check=full --show-reachable=yes
+
 LIBLOKATT := out/.liblokatt/liblokatt.a
 LOKATT_BINARY := out/lokatt
 TEST_BINARY := out/test-lokatt
@@ -57,10 +62,13 @@ test: $(TEST_BINARY)
 	@$(TEST_BINARY) $(T)
 
 test-valgrind:
-	@valgrind -q --trace-children=yes --leak-check=full --show-reachable=yes --error-exitcode=126 $(TEST_BINARY) $(T)
+	@$(VALGRIND) $(VALGRIND_FLAGS) $(TEST_BINARY) $(T)
 
 run: $(LOKATT_BINARY)
 	@$(LOKATT_BINARY)
+
+run-valgrind: $(LOKATT_BINARY)
+	@$(VALGRIND) $(VALGRIND_FLAGS) --suppressions=.lokatt.supp $(LOKATT_BINARY)
 
 $(LIBLOKATT): $(LIBLOKATT_OBJECTS) | out/.liblokatt
 	$(QUIET_AR)ar rcs $@ $^
