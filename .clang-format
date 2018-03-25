@@ -1,0 +1,8 @@
+BasedOnStyle: LLVM
+AllowShortBlocksOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: false
+AllowShortIfStatementsOnASingleLine: false
+BreakBeforeBraces: Linux
+IndentCaseLabels: false
+IndentWidth: 8
