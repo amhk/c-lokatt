@@ -11,11 +11,11 @@ TEST(msg, basic_send_receive)
 {
         struct msg msg1;
         msg1.type = MSG_TYPE_FOO;
-        msg1.data.foo.payload = 1234;
+        msg1.foo.payload = 1234;
 
         struct msg msg2;
         msg2.type = MSG_TYPE_BAR;
-        strcpy(msg2.data.bar.payload, "test");
+        strcpy(msg2.bar.payload, "test");
 
         msg_queue_t queue = msg_queue_create(16);
 
@@ -25,11 +25,11 @@ TEST(msg, basic_send_receive)
         struct msg msg;
         msg_queue_receive(queue, &msg);
         ASSERT_EQ(msg.type, MSG_TYPE_FOO);
-        ASSERT_EQ(msg.data.foo.payload, 1234);
+        ASSERT_EQ(msg.foo.payload, 1234);
 
         msg_queue_receive(queue, &msg);
         ASSERT_EQ(msg.type, MSG_TYPE_BAR);
-        ASSERT_EQ(strcmp(msg.data.bar.payload, "test"), 0);
+        ASSERT_EQ(strcmp(msg.bar.payload, "test"), 0);
 
         msg_queue_destroy(queue);
 }
@@ -41,13 +41,13 @@ TEST(msg, loop_around_queue_size)
         for (int i = 0; i < 10; i++) {
                 struct msg msg;
                 msg.type = MSG_TYPE_FOO;
-                msg.data.foo.payload = i;
+                msg.foo.payload = i;
                 msg_queue_send(queue, &msg);
 
                 memset(&msg, 0, sizeof(struct msg));
                 msg_queue_receive(queue, &msg);
                 ASSERT_EQ(msg.type, MSG_TYPE_FOO);
-                ASSERT_EQ(msg.data.foo.payload, i);
+                ASSERT_EQ(msg.foo.payload, i);
         }
 
         msg_queue_destroy(queue);
@@ -65,7 +65,7 @@ static void *producer_thread(void *args_)
         for (size_t i = 0; i < args->iterations; i++) {
                 struct msg msg;
                 msg.type = MSG_TYPE_FOO;
-                msg.data.foo.payload = i;
+                msg.foo.payload = i;
                 msg_queue_send(args->queue, &msg);
 
                 if (args->delay_ns > 0) {
@@ -93,7 +93,7 @@ TEST(msg, consumer_faster_than_producer)
                 struct msg msg;
                 msg_queue_receive(queue, &msg);
                 ASSERT_EQ(msg.type, MSG_TYPE_FOO);
-                ASSERT_EQ(msg.data.foo.payload, (int)i);
+                ASSERT_EQ(msg.foo.payload, (int)i);
         }
 
         pthread_join(thread, NULL);
@@ -115,7 +115,7 @@ TEST(msg, producer_faster_than_consumer)
                 struct msg msg;
                 msg_queue_receive(queue, &msg);
                 ASSERT_EQ(msg.type, MSG_TYPE_FOO);
-                ASSERT_EQ(msg.data.foo.payload, (int)i);
+                ASSERT_EQ(msg.foo.payload, (int)i);
 
                 struct timespec t;
                 t.tv_sec = 0;

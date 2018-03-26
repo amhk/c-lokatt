@@ -21,7 +21,7 @@ struct msg {
         union {
                 struct msg_foo foo;
                 struct msg_bar bar;
-        } data;
+        };
 };
 
 typedef unsigned long int msg_queue_t;
