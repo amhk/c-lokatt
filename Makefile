@@ -76,7 +76,7 @@ static-analysis: $(LIBLOKATT_PLISTS) $(TEST_PLISTS) $(LOKATT_PLISTS)
 test: $(TEST_BINARY)
 	@$(TEST_BINARY) $(T)
 
-test-valgrind:
+test-valgrind: $(TEST_BINARY)
 	@$(VALGRIND) $(VALGRIND_FLAGS) $(TEST_BINARY) $(T)
 
 run: $(LOKATT_BINARY)
