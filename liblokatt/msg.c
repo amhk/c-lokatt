@@ -19,9 +19,9 @@ msg_queue_t msg_queue_create(size_t size)
                 die("invalid argument");
         }
         struct msg_queue *queue =
-            malloc(sizeof(struct msg_queue) + size * sizeof(struct msg));
+            calloc(1, sizeof(struct msg_queue) + size * sizeof(struct msg));
         if (!queue) {
-                die("malloc");
+                die("calloc");
         }
         if (pthread_mutex_init(&queue->mutex, NULL) != 0) {
                 die("pthread_mutex_init");
