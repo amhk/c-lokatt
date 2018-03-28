@@ -1,6 +1,7 @@
 #ifndef LOKATT_MSG_H
 #define LOKATT_MSG_H
 #include <stddef.h>
+#include <stdint.h>
 
 /**
  * Thread safe, single consumer, multiple producer message queue.
@@ -24,7 +25,7 @@ struct msg {
         };
 };
 
-typedef unsigned long int msg_queue_t;
+typedef uintptr_t msg_queue_t;
 
 /**
  * Create a new message queue with room for size number of messages. The caller
