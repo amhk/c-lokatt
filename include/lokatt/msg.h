@@ -12,7 +12,7 @@ struct msg_foo {
 };
 
 struct msg_bar {
-        char payload[10];
+        char payload[128];
 };
 
 struct msg {
