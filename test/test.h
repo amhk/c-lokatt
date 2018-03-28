@@ -17,7 +17,7 @@ extern const struct test __start_test_section, __stop_test_section;
         const struct test test_##namespace##name                               \
             __attribute__((section("test_section"))) = {                       \
                 #namespace, #name, lokatt_test_##namespace##_##name};          \
-        static void lokatt_test_##namespace##_##name()
+        static void lokatt_test_##namespace##_##name(void)
 
 #define EXIT_VALGRIND 126
 #define EXIT_SKIPPED 127

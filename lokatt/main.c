@@ -79,7 +79,7 @@ static void *thread_input_main(void *arg)
 
 // main
 
-int main()
+int main(int argc __attribute__((unused)), char **argv __attribute__((unused)))
 {
         msg_queue_t msg_queue = msg_queue_create(16);
         initscr();
