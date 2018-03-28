@@ -13,11 +13,11 @@ struct test {
 extern const struct test __start_test_section, __stop_test_section;
 
 #define TEST(namespace, name)                                                  \
-        static void lokatt_test_##namespace##name(void);                       \
+        static void lokatt_test_##namespace##_##name(void);                    \
         const struct test test_##namespace##name                               \
             __attribute__((section("test_section"))) = {                       \
-                #namespace, #name, lokatt_test_##namespace##name};             \
-        static void lokatt_test_##namespace##name()
+                #namespace, #name, lokatt_test_##namespace##_##name};          \
+        static void lokatt_test_##namespace##_##name(void)
 
 #define EXIT_VALGRIND 126
 #define EXIT_SKIPPED 127

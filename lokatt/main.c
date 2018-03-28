@@ -40,7 +40,7 @@ static void *thread_background_main(void *arg)
                 print("thread 0x%08lx: ...\n", pthread_self());
                 struct msg msg;
                 msg.type = MSG_TYPE_BAR;
-                strcpy(msg.data.bar.payload, "bar");
+                strcpy(msg.bar.payload, "bar");
                 msg_queue_send(msg_queue, &msg);
                 struct timespec t;
                 t.tv_sec = 0;
@@ -67,9 +67,9 @@ static void *thread_input_main(void *arg)
         for (;;) {
                 struct msg msg;
                 msg.type = MSG_TYPE_FOO;
-                msg.data.foo.payload = getch();
+                msg.foo.payload = getch();
                 print("thread 0x%08lx: read %d\n", pthread_self(),
-                      msg.data.foo.payload);
+                      msg.foo.payload);
                 msg_queue_send(msg_queue, &msg);
         }
         print("thread 0x%08lx: end\n", pthread_self());
@@ -79,7 +79,7 @@ static void *thread_input_main(void *arg)
 
 // main
 
-int main()
+int main(int argc __attribute__((unused)), char **argv __attribute__((unused)))
 {
         msg_queue_t msg_queue = msg_queue_create(16);
         initscr();
@@ -103,13 +103,13 @@ int main()
                 msg_queue_receive(msg_queue, &msg);
                 switch (msg.type) {
                 case MSG_TYPE_FOO:
-                        print("main: %d: %d\n", msg.type, msg.data.foo.payload);
+                        print("main: %d: %d\n", msg.type, msg.foo.payload);
                         break;
                 case MSG_TYPE_BAR:
-                        print("main: %d: %s\n", msg.type, msg.data.bar.payload);
+                        print("main: %d: %s\n", msg.type, msg.bar.payload);
                         break;
                 }
-                if (msg.type == MSG_TYPE_FOO && msg.data.foo.payload == 'q') {
+                if (msg.type == MSG_TYPE_FOO && msg.foo.payload == 'q') {
                         break;
                 }
         }
