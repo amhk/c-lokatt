@@ -28,6 +28,7 @@ VALGRIND := valgrind
 VALGRIND_FLAGS :=
 VALGRIND_FLAGS += -q --trace-children=yes --error-exitcode=126
 VALGRIND_FLAGS += --leak-check=full --show-reachable=yes
+VALGRIND_FLAGS += --track-origins=yes
 
 LIBLOKATT := out/.liblokatt/liblokatt.a
 LOKATT_BINARY := out/lokatt

@@ -5,6 +5,7 @@
 
 #include "lokatt/error.h"
 #include "lokatt/msg.h"
+#include "lokatt/wrappers.h"
 
 struct msg_queue {
         size_t size, read_head, write_head;
@@ -19,10 +20,7 @@ msg_queue_t msg_queue_create(size_t size)
                 die("invalid argument");
         }
         struct msg_queue *queue =
-            malloc(sizeof(struct msg_queue) + size * sizeof(struct msg));
-        if (!queue) {
-                die("malloc");
-        }
+            xalloc(sizeof(struct msg_queue) + size * sizeof(struct msg));
         if (pthread_mutex_init(&queue->mutex, NULL) != 0) {
                 die("pthread_mutex_init");
         }
@@ -59,7 +57,7 @@ void msg_queue_destroy(msg_queue_t queue)
         if (pthread_mutex_destroy(&q->mutex) != 0) {
                 die("pthread_mutex_destroy");
         }
-        free(q);
+        xfree(q);
 }
 
 void msg_queue_send(msg_queue_t queue, const struct msg *msg)
