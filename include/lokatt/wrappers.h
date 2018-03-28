@@ -18,4 +18,13 @@ static inline void xfree(void *p)
         free(p);
 }
 
+static inline void *xrealloc(void *ptr, size_t size)
+{
+        ptr = realloc(ptr, size);
+        if (!ptr) {
+                die("xrealloc");
+        }
+        return ptr;
+}
+
 #endif
