@@ -16,7 +16,7 @@ extern const struct test __start_test_section, __stop_test_section;
 
 #define TEST(namespace, name)                                                  \
         static void lokatt_test_##namespace##_##name(void);                    \
-        const struct test test_##namespace##name                               \
+        const struct test test_##namespace##_##name                            \
             __attribute__((section("test_section"))) = {                       \
                 #namespace, #name, lokatt_test_##namespace##_##name};          \
         static void lokatt_test_##namespace##_##name(void)
