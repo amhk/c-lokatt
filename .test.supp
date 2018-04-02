@@ -145,45 +145,10 @@
    ncurses
    Memcheck:Leak
    match-leak-kinds: reachable
-   fun:malloc
-   fun:_nc_scroll_optimize
-   fun:doupdate
-}
-{
-   ncurses
-   Memcheck:Leak
-   match-leak-kinds: reachable
    fun:calloc
    fun:_nc_setupterm
    fun:newterm
    fun:initscr
-}
-{
-   ncurses
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:calloc
-   fun:_nc_hash_map
-   fun:_nc_scroll_optimize
-   fun:doupdate
-}
-{
-   ncurses
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:malloc
-   fun:_nc_hash_map
-   fun:_nc_scroll_optimize
-   fun:doupdate
-}
-{
-   ncurses
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:malloc
-   fun:_nc_printf_string
-   fun:vwprintw
-   fun:mvwprintw
 }
 {
    ncurses
@@ -203,4 +168,13 @@
    fun:_nc_setupscreen
    fun:newterm
    fun:initscr
+}
+{
+   ncurses
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:_nc_printf_string
+   fun:vwprintw
+   fun:mvwprintw
 }

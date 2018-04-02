@@ -78,7 +78,7 @@ test: $(TEST_BINARY)
 	@$(TEST_BINARY) $(T)
 
 test-valgrind: $(TEST_BINARY)
-	@$(VALGRIND) $(VALGRIND_FLAGS) $(TEST_BINARY) $(T)
+	@$(VALGRIND) $(VALGRIND_FLAGS) --suppressions=.test.supp $(TEST_BINARY) $(T)
 
 run: $(LOKATT_BINARY)
 	@$(LOKATT_BINARY)
