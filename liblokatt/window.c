@@ -5,6 +5,7 @@
 #include <ncurses.h>
 
 #include "lokatt/error.h"
+#include "lokatt/repo.h"
 #include "lokatt/window.h"
 #include "lokatt/wrappers.h"
 
@@ -59,6 +60,28 @@ void window_set_buffer(window_t w, buffer_t b)
         win->buffer = b;
 }
 
+static void printw_text(struct window *win, size_t lineno, int y)
+{
+        if (buffer_text_get(win->buffer, lineno, win->buf, win->cols) != 0) {
+                die("buffer_text_get");
+        }
+        mvwprintw(win->window, y, 0, "%s", win->buf);
+}
+
+static void printw_logcat(struct window *win, size_t lineno, int y)
+{
+        const struct logcat_entry *entry =
+            buffer_logcat_peek(win->buffer, lineno);
+        if (!entry) {
+                // TODO: handle in a better way (entry can be
+                // NULL if the repo has reclaimed memory)
+                die("buffer_logcat_peek");
+        }
+        snprintf(win->buf, win->cols, "%4d %4d %d %-10s %s", entry->pid,
+                 entry->tid, entry->level, entry->tag, entry->text);
+        mvwprintw(win->window, y, 0, win->buf);
+}
+
 void window_refresh(window_t w)
 {
         struct window *win = (struct window *)w;
@@ -66,14 +89,20 @@ void window_refresh(window_t w)
         werase(win->window);
 
         if (win->buffer != NO_BUFFER) {
+                enum buffer_type_t type = buffer_type(win->buffer);
                 size_t lineno = buffer_size(win->buffer);
                 int y = win->rows - 1;
                 while (lineno > 0 && y >= 0) {
-                        if (buffer_get_line(win->buffer, lineno, win->buf,
-                                            win->cols) != 0) {
-                                die("buffer_get_line");
+                        switch (type) {
+                        case BUFFER_TYPE_TEXT:
+                                printw_text(win, lineno, y);
+                                break;
+                        case BUFFER_TYPE_LOGCAT:
+                                printw_logcat(win, lineno, y);
+                                break;
+                        default:
+                                die("unexpected buffer type %d", type);
                         }
-                        mvwprintw(win->window, y, 0, win->buf);
                         lineno--;
                         y--;
                 }

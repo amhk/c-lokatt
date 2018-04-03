@@ -30,7 +30,7 @@ TEST(window, dump)
                          buf),
                   0);
 
-        buffer_t b = buffer_create();
+        buffer_t b = buffer_text_create();
         window_set_buffer(w, b);
         window_dump(w, buf, sizeof(buf) - 1);
         ASSERT_EQ(strcmp("        "
@@ -40,8 +40,8 @@ TEST(window, dump)
                          buf),
                   0);
 
-        buffer_add_line(b, "one", 4);
-        buffer_add_line(b, "two", 4);
+        buffer_text_add(b, "one", 4);
+        buffer_text_add(b, "two", 4);
         window_dump(w, buf, sizeof(buf) - 1);
         ASSERT_EQ(strcmp("        "
                          "        "
@@ -59,9 +59,9 @@ TEST(window, dump)
                          buf),
                   0);
 
-        buffer_add_line(b, "three", 6);
-        buffer_add_line(b, "four", 5);
-        buffer_add_line(b, "five", 5);
+        buffer_text_add(b, "three", 6);
+        buffer_text_add(b, "four", 5);
+        buffer_text_add(b, "five", 5);
         window_refresh(w);
         window_dump(w, buf, sizeof(buf) - 1);
         ASSERT_EQ(strcmp("two     "
@@ -81,8 +81,8 @@ TEST(window, switch_buffers)
         initscr();
         window_t w = window_create(0, 0, 8, 1);
 
-        buffer_t b1 = buffer_create();
-        buffer_add_line(b1, "b1", 2);
+        buffer_t b1 = buffer_text_create();
+        buffer_text_add(b1, "b1", 2);
         window_set_buffer(w, b1);
         window_refresh(w);
 
@@ -90,8 +90,8 @@ TEST(window, switch_buffers)
         window_dump(w, buf, sizeof(buf) - 1);
         ASSERT_EQ(strcmp("b1      ", buf), 0);
 
-        buffer_t b2 = buffer_create();
-        buffer_add_line(b2, "b2", 2);
+        buffer_t b2 = buffer_text_create();
+        buffer_text_add(b2, "b2", 2);
         window_set_buffer(w, b2);
         window_refresh(w);
 
