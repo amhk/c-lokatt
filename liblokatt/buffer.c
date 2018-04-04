@@ -68,7 +68,7 @@ void buffer_add_line(buffer_t b, const char *line, size_t len)
 {
         struct buffer *buffer = (struct buffer *)b;
 
-        // update entires memory
+        // update entries memory
         const size_t entries_new_size = buffer->entries.used_size + len + 1;
         arena_grow(&buffer->entries, entries_new_size);
         char *p = buffer->entries.memory + buffer->entries.used_size;
