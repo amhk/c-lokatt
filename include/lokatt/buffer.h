@@ -1,6 +1,7 @@
 #ifndef LOKATT_BUFFER_H
 #define LOKATT_BUFFER_H
 #include <stddef.h>
+#include <stdint.h>
 
 /**
  * Dynamically allocated and expanding container of text.
@@ -15,7 +16,7 @@
  * Buffers should also support filtering.
  */
 
-typedef unsigned long int buffer_t;
+typedef uintptr_t buffer_t;
 
 /**
  * Create a new, empty buffer. The caller becomes the owner of the buffer.

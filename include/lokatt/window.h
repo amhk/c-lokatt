@@ -1,5 +1,6 @@
 #ifndef LOKATT_WINDOW_H
 #define LOKATT_WINDOW_H
+#include <stdint.h>
 
 #include "lokatt/buffer.h"
 
@@ -13,7 +14,7 @@
  * such as SIGWINCH corresponds to onConfigurationChanged.
  */
 
-typedef unsigned long int window_t;
+typedef uintptr_t window_t;
 
 /**
  * Create a new window. The caller becomes the owner of the window.
