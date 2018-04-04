@@ -12,12 +12,20 @@ struct window {
         size_t x, y, cols, rows;
         size_t lineno;
         buffer_t buffer;
+        char *buf;
 
         WINDOW *window;
 };
 
 window_t window_create(size_t x, size_t y, size_t cols, size_t rows)
 {
+        if (cols == 0) {
+                cols = COLS;
+        }
+        if (rows == 0) {
+                rows = LINES;
+        }
+
         struct window *win = xalloc(sizeof(struct window));
         win->x = x;
         win->y = y;
@@ -25,6 +33,7 @@ window_t window_create(size_t x, size_t y, size_t cols, size_t rows)
         win->rows = rows;
         win->lineno = 0;
         win->buffer = NO_BUFFER;
+        win->buf = xalloc(cols);
 
         if ((win->window = newwin(rows, cols, y, x)) == NULL) {
                 die("newwin");
@@ -40,6 +49,7 @@ void window_destroy(window_t w)
 {
         struct window *win = (struct window *)w;
         delwin(win->window);
+        xfree(win->buf);
         xfree(win);
 }
 
@@ -59,12 +69,11 @@ void window_refresh(window_t w)
                 size_t lineno = buffer_size(win->buffer);
                 int y = win->rows - 1;
                 while (lineno > 0 && y >= 0) {
-                        char buf[128];
-                        if (buffer_get_line(win->buffer, lineno, buf,
-                                            sizeof(buf)) != 0) {
+                        if (buffer_get_line(win->buffer, lineno, win->buf,
+                                            win->cols) != 0) {
                                 die("buffer_get_line");
                         }
-                        mvwprintw(win->window, y, 0, buf);
+                        mvwprintw(win->window, y, 0, win->buf);
                         lineno--;
                         y--;
                 }
