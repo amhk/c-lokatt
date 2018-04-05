@@ -1,42 +1,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "lokatt/arena.h"
 #include "lokatt/buffer.h"
 #include "lokatt/error.h"
 #include "lokatt/wrappers.h"
-
-// arena
-
-struct arena {
-        void *memory;
-        size_t used_size;
-        size_t alloc_size;
-};
-
-static void arena_init(struct arena *a)
-{
-        a->memory = xalloc(2);
-        a->used_size = 0;
-        a->alloc_size = 2;
-}
-
-static void arena_destroy(struct arena *a)
-{
-        xfree(a->memory);
-}
-
-static void arena_grow(struct arena *a, size_t new_min_size)
-{
-        if (a->alloc_size > new_min_size) {
-                return;
-        }
-        while (a->alloc_size < new_min_size) {
-                a->alloc_size *= 2;
-        }
-        a->memory = xrealloc(a->memory, a->alloc_size);
-}
-
-// buffer
 
 struct buffer {
         struct arena indices;
@@ -45,8 +13,8 @@ struct buffer {
 
 static void buffer_init(struct buffer *buffer)
 {
-        arena_init(&buffer->indices);
-        arena_init(&buffer->entries);
+        arena_init(&buffer->indices, 128 * sizeof(size_t));
+        arena_init(&buffer->entries, 128 * 256);
 }
 
 buffer_t buffer_create(void)
