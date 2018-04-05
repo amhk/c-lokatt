@@ -4,6 +4,8 @@
 
 /* inspired by the tests in the Wayland project */
 
+const char *test_data_dir(void);
+
 struct test {
         const char *namespace;
         const char *name;
