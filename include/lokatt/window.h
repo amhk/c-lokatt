@@ -30,7 +30,6 @@ window_t window_create(size_t x, size_t y, size_t cols, size_t rows);
  */
 void window_destroy(window_t);
 
-#define NO_BUFFER 0
 /**
  * Set the contents of the window. This does not transfer ownership of the
  * buffer. Multiple windows can have the same buffer assigned at the same time.

@@ -18,6 +18,8 @@
 
 typedef uintptr_t buffer_t;
 
+#define NO_BUFFER 0
+
 /**
  * Create a new, empty buffer. The caller becomes the owner of the buffer.
  */
