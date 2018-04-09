@@ -1,3 +1,4 @@
+#include <libgen.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -16,6 +17,19 @@
 #define ANSI_RESET "\033[0m"
 
 extern const struct test __start_test_section, __stop_test_section;
+
+static char test_data_dir_[1024];
+
+const char *test_data_dir()
+{
+        return test_data_dir_;
+}
+
+static void init_test_data_dir(char *argv0)
+{
+        snprintf(test_data_dir_, sizeof(test_data_dir_), "%s/../test/data",
+                 dirname(argv0));
+}
 
 struct results {
         int passed;
@@ -119,6 +133,9 @@ int main(int argc, char **argv)
                 list_all_tests();
                 return 0;
         }
+
+        // TODO: add proper argv parsing
+        init_test_data_dir(argv[0]);
 
         char *namespace = NULL, *name = NULL;
         if (argc > 1) {

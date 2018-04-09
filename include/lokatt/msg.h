@@ -3,6 +3,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "lokatt/adb.h"
+
 /**
  * Thread safe, single consumer, multiple producer message queue.
  */
@@ -18,10 +20,13 @@ struct msg_bar {
 struct msg {
         enum { MSG_TYPE_FOO,
                MSG_TYPE_BAR,
+               MSG_TYPE_LOGGER_ENTRY,
         } type;
         union {
                 struct msg_foo foo;
                 struct msg_bar bar;
+                struct logger_entry logger_entry;
+                char __padding[LOGGER_ENTRY_MAX_LEN];
         };
 };
 

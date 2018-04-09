@@ -81,10 +81,10 @@ test-valgrind: $(TEST_BINARY)
 	@$(VALGRIND) $(VALGRIND_FLAGS) --suppressions=.test.supp $(TEST_BINARY) $(T)
 
 run: $(LOKATT_BINARY)
-	@$(LOKATT_BINARY)
+	@$(LOKATT_BINARY) test/data/pixel-2-android-p-developer-preview-easter-egg.bin
 
 run-valgrind: $(LOKATT_BINARY)
-	@$(VALGRIND) $(VALGRIND_FLAGS) --suppressions=.lokatt.supp $(LOKATT_BINARY)
+	@$(VALGRIND) $(VALGRIND_FLAGS) --suppressions=.lokatt.supp $(LOKATT_BINARY) test/data/pixel-2-android-p-developer-preview-easter-egg.bin
 
 $(LIBLOKATT): $(LIBLOKATT_OBJECTS) | out/.liblokatt
 	$(QUIET_AR)ar rcs $@ $^
