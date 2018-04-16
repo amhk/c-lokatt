@@ -105,6 +105,8 @@ int main(int argc __attribute__((unused)), char **argv __attribute__((unused)))
         curs_set(0);
         cbreak();
         noecho();
+        werase(stdscr);
+        wrefresh(stdscr);
 
         msg_queue_t msg_queue = msg_queue_create(16);
         repo_t repo = repo_create();
