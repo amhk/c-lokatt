@@ -26,7 +26,7 @@ static struct {
         int list;
 } opts = {NULL, 0};
 
-const char *test_data_dir()
+const char *test_data_dir(void)
 {
         return test_data_dir_;
 }
