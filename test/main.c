@@ -1,3 +1,4 @@
+#include <getopt.h>
 #include <libgen.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -8,6 +9,7 @@
 #include <unistd.h>
 
 #include "lokatt/error.h"
+#include "lokatt/wrappers.h"
 
 #include "test.h"
 
@@ -19,10 +21,19 @@
 extern const struct test __start_test_section, __stop_test_section;
 
 static char test_data_dir_[1024];
+static struct {
+        char *filter;
+        int list;
+} opts = {NULL, 0};
 
 const char *test_data_dir()
 {
         return test_data_dir_;
+}
+
+static void on_exit(void)
+{
+        xfree(opts.filter);
 }
 
 static void init_test_data_dir(char *argv0)
@@ -127,19 +138,49 @@ static void list_all_tests(void)
         }
 }
 
+static void parse_args(int argc, char **argv)
+{
+        while (1) {
+                static const struct option long_options[] = {
+                    {"filter", required_argument, 0, 'f'},
+                    {"list", no_argument, 0, 'l'},
+                    {0, 0, 0, 0},
+                };
+                int index;
+                int c = getopt_long_only(argc, argv, "", long_options, &index);
+                switch (c) {
+                case -1:
+                        return;
+                case '?':
+                        exit(1);
+                case 'f':
+                        if (strlen(optarg) > 0) {
+                                xfree(opts.filter);
+                                opts.filter = xalloc(strlen(optarg) + 1);
+                                strcpy(opts.filter, optarg);
+                        }
+                        break;
+                case 'l':
+                        opts.list = 1;
+                        break;
+                }
+        }
+}
+
 int main(int argc, char **argv)
 {
-        if (argc > 1 && !strcmp(argv[1], "--list")) {
+        atexit(on_exit);
+        init_test_data_dir(argv[0]);
+        parse_args(argc, argv);
+
+        if (opts.list) {
                 list_all_tests();
                 return 0;
         }
 
-        // TODO: add proper argv parsing
-        init_test_data_dir(argv[0]);
-
         char *namespace = NULL, *name = NULL;
-        if (argc > 1) {
-                namespace = argv[1];
+        if (opts.filter) {
+                namespace = opts.filter;
                 name = strchr(namespace, '/');
                 if (name) {
                         *name++ = '\0';
