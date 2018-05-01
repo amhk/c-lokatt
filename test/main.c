@@ -143,10 +143,16 @@ static void print_results(const struct results *r)
         }
 }
 
-static void list_all_tests(void)
+static void list_all_tests(const char *namespace, const char *name)
 {
         for (const struct test *t = &__start_test_section;
              t < &__stop_test_section; t++) {
+                if (namespace && strcmp(namespace, t->namespace)) {
+                        continue;
+                }
+                if (name && strcmp(name, t->name)) {
+                        continue;
+                }
                 printf("%s/%s\n", t->namespace, t->name);
         }
 }
@@ -217,7 +223,7 @@ int main(int argc, char **argv)
         }
 
         if (opts.list) {
-                list_all_tests();
+                list_all_tests(namespace, name);
                 return 0;
         } else {
                 struct results r = {0, 0, 0, 0};
