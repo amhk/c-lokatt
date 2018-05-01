@@ -10,15 +10,20 @@ void __die(const char *file, unsigned int line, const char *func,
            const char *fmt, ...)
 {
         va_list ap;
-        int saved_errno = errno;
-
         va_start(ap, fmt);
-        fprintf(stderr, "%s:%d:%s: ", file, line, func);
-        vfprintf(stderr, fmt, ap);
-        if (saved_errno)
-                fprintf(stderr, ": %d %s", errno, strerror(errno));
-        fprintf(stderr, "\n");
+        error_vprint(file, line, func, fmt, ap);
         va_end(ap);
 
         abort();
+}
+
+void error_vprint(const char *file, unsigned int line, const char *func,
+                  const char *fmt, va_list ap)
+{
+        fprintf(stderr, "%s:%d:%s: ", file, line, func);
+        vfprintf(stderr, fmt, ap);
+        if (errno) {
+                fprintf(stderr, ": %d %s", errno, strerror(errno));
+        }
+        fprintf(stderr, "\n");
 }
