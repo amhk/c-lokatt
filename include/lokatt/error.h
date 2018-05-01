@@ -1,5 +1,6 @@
 #ifndef LOKATT_ERROR_H
 #define LOKATT_ERROR_H
+#include <stdarg.h>
 
 #define die(fmt, ...)                                                          \
         do {                                                                   \
@@ -9,5 +10,8 @@
 void __die(const char *file, unsigned int line, const char *func,
            const char *fmt, ...)
     __attribute__((__noreturn__, __format__(__printf__, 4, 5)));
+
+void error_vprint(const char *file, unsigned int line, const char *func,
+                  const char *fmt, va_list ap);
 
 #endif

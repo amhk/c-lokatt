@@ -1,13 +1,16 @@
+#include <getopt.h>
 #include <libgen.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
 #include "lokatt/error.h"
+#include "lokatt/wrappers.h"
 
 #include "test.h"
 
@@ -19,16 +22,37 @@
 extern const struct test __start_test_section, __stop_test_section;
 
 static char test_data_dir_[1024];
+static struct {
+        char *argv0;
+        char *filter;
+        int gdb;
+        int list;
+} opts = {NULL, NULL, 0, 0};
 
-const char *test_data_dir()
+const char *test_data_dir(void)
 {
         return test_data_dir_;
 }
 
-static void init_test_data_dir(char *argv0)
+void __fail(const char *file, unsigned int line, const char *func,
+            const char *fmt, ...)
 {
-        snprintf(test_data_dir_, sizeof(test_data_dir_), "%s/../test/data",
-                 dirname(argv0));
+        va_list ap;
+        va_start(ap, fmt);
+        error_vprint(file, line, func, fmt, ap);
+        va_end(ap);
+
+        if (opts.gdb) {
+                kill(getpid(), SIGTRAP);
+        }
+
+        exit(1);
+}
+
+static void on_exit(void)
+{
+        xfree(opts.argv0);
+        xfree(opts.filter);
 }
 
 struct results {
@@ -119,36 +143,92 @@ static void print_results(const struct results *r)
         }
 }
 
-static void list_all_tests(void)
+static void list_all_tests(const char *namespace, const char *name)
 {
         for (const struct test *t = &__start_test_section;
              t < &__stop_test_section; t++) {
+                if (namespace && strcmp(namespace, t->namespace)) {
+                        continue;
+                }
+                if (name && strcmp(name, t->name)) {
+                        continue;
+                }
                 printf("%s/%s\n", t->namespace, t->name);
+        }
+}
+
+static void parse_args(int argc, char **argv)
+{
+        opts.argv0 = xalloc(strlen(argv[0]) + 1);
+        strcpy(opts.argv0, argv[0]);
+
+        while (1) {
+                static const struct option long_options[] = {
+                    {"filter", required_argument, 0, 'f'},
+                    {"gdb", no_argument, 0, 'g'},
+                    {"list", no_argument, 0, 'l'},
+                    {0, 0, 0, 0},
+                };
+                int index;
+                int c = getopt_long_only(argc, argv, "", long_options, &index);
+                switch (c) {
+                case -1:
+                        return;
+                case '?':
+                        exit(1);
+                case 'f':
+                        if (strlen(optarg) > 0) {
+                                xfree(opts.filter);
+                                opts.filter = xalloc(strlen(optarg) + 1);
+                                strcpy(opts.filter, optarg);
+                        }
+                        break;
+                case 'g':
+                        opts.gdb = 1;
+                        break;
+                case 'l':
+                        opts.list = 1;
+                        break;
+                }
         }
 }
 
 int main(int argc, char **argv)
 {
-        if (argc > 1 && !strcmp(argv[1], "--list")) {
-                list_all_tests();
-                return 0;
-        }
-
-        // TODO: add proper argv parsing
-        init_test_data_dir(argv[0]);
+        atexit(on_exit);
+        parse_args(argc, argv);
+        snprintf(test_data_dir_, sizeof(test_data_dir_), "%s/../test/data",
+                 dirname(argv[0]));
 
         char *namespace = NULL, *name = NULL;
-        if (argc > 1) {
-                namespace = argv[1];
+        if (opts.filter) {
+                namespace = opts.filter;
                 name = strchr(namespace, '/');
                 if (name) {
                         *name++ = '\0';
                 }
+                if (!strlen(namespace)) {
+                        fprintf(stderr, "error: bad filter: empty namespace\n");
+                        return 1;
+                }
+                if (name && !strlen(name)) {
+                        name = NULL;
+                }
         }
 
-        struct results r = {0, 0, 0, 0};
-        run_all_tests(namespace, name, &r);
-        print_results(&r);
+        if (opts.gdb && !name) {
+                fprintf(stderr,
+                        "error: --gdb requires a single test, use --filter\n");
+                return 1;
+        }
 
-        return r.failed;
+        if (opts.list) {
+                list_all_tests(namespace, name);
+                return 0;
+        } else {
+                struct results r = {0, 0, 0, 0};
+                run_all_tests(namespace, name, &r);
+                print_results(&r);
+                return r.failed;
+        }
 }
