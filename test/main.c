@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -22,24 +23,36 @@ extern const struct test __start_test_section, __stop_test_section;
 
 static char test_data_dir_[1024];
 static struct {
+        char *argv0;
         char *filter;
+        int gdb;
         int list;
-} opts = {NULL, 0};
+} opts = {NULL, NULL, 0, 0};
 
 const char *test_data_dir(void)
 {
         return test_data_dir_;
 }
 
-static void on_exit(void)
+void __fail(const char *file, unsigned int line, const char *func,
+            const char *fmt, ...)
 {
-        xfree(opts.filter);
+        va_list ap;
+        va_start(ap, fmt);
+        error_vprint(file, line, func, fmt, ap);
+        va_end(ap);
+
+        if (opts.gdb) {
+                kill(getpid(), SIGTRAP);
+        }
+
+        exit(1);
 }
 
-static void init_test_data_dir(char *argv0)
+static void on_exit(void)
 {
-        snprintf(test_data_dir_, sizeof(test_data_dir_), "%s/../test/data",
-                 dirname(argv0));
+        xfree(opts.argv0);
+        xfree(opts.filter);
 }
 
 struct results {
@@ -140,9 +153,13 @@ static void list_all_tests(void)
 
 static void parse_args(int argc, char **argv)
 {
+        opts.argv0 = xalloc(strlen(argv[0]) + 1);
+        strcpy(opts.argv0, argv[0]);
+
         while (1) {
                 static const struct option long_options[] = {
                     {"filter", required_argument, 0, 'f'},
+                    {"gdb", no_argument, 0, 'g'},
                     {"list", no_argument, 0, 'l'},
                     {0, 0, 0, 0},
                 };
@@ -160,6 +177,9 @@ static void parse_args(int argc, char **argv)
                                 strcpy(opts.filter, optarg);
                         }
                         break;
+                case 'g':
+                        opts.gdb = 1;
+                        break;
                 case 'l':
                         opts.list = 1;
                         break;
@@ -170,13 +190,9 @@ static void parse_args(int argc, char **argv)
 int main(int argc, char **argv)
 {
         atexit(on_exit);
-        init_test_data_dir(argv[0]);
         parse_args(argc, argv);
-
-        if (opts.list) {
-                list_all_tests();
-                return 0;
-        }
+        snprintf(test_data_dir_, sizeof(test_data_dir_), "%s/../test/data",
+                 dirname(argv[0]));
 
         char *namespace = NULL, *name = NULL;
         if (opts.filter) {
@@ -185,11 +201,28 @@ int main(int argc, char **argv)
                 if (name) {
                         *name++ = '\0';
                 }
+                if (!strlen(namespace)) {
+                        fprintf(stderr, "error: bad filter: empty namespace\n");
+                        return 1;
+                }
+                if (name && !strlen(name)) {
+                        name = NULL;
+                }
         }
 
-        struct results r = {0, 0, 0, 0};
-        run_all_tests(namespace, name, &r);
-        print_results(&r);
+        if (opts.gdb && !name) {
+                fprintf(stderr,
+                        "error: --gdb requires a single test, use --filter\n");
+                return 1;
+        }
 
-        return r.failed;
+        if (opts.list) {
+                list_all_tests();
+                return 0;
+        } else {
+                struct results r = {0, 0, 0, 0};
+                run_all_tests(namespace, name, &r);
+                print_results(&r);
+                return r.failed;
+        }
 }
