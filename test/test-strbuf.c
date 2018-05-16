@@ -123,3 +123,55 @@ TEST(strbuf, insert)
 
         strbuf_destroy(&sb);
 }
+
+static size_t exp_inc(struct strbuf *sb, const char *pattern, void *userdata)
+{
+        if (*pattern == 'n') {
+                int *i = (int *)userdata;
+                strbuf_addf(sb, "%d", *i);
+                *i += 1;
+                return 1;
+        }
+        return 0;
+}
+
+TEST(strbuf, expand)
+{
+        struct strbuf sb = STRBUF_INIT;
+        int i = 0;
+
+        int status = strbuf_expand(&sb, "foo", exp_inc, &i);
+        ASSERT_EQ(status, 0);
+        ASSERT_STRBUF_EQ(&sb, "foo");
+
+        i = 0;
+        strbuf_reset(&sb);
+        status = strbuf_expand(&sb, "%%", exp_inc, &i);
+        ASSERT_EQ(status, 0);
+        ASSERT_STRBUF_EQ(&sb, "%");
+
+        i = 0;
+        strbuf_reset(&sb);
+        status = strbuf_expand(&sb, "%%%%", exp_inc, &i);
+        ASSERT_EQ(status, 0);
+        ASSERT_STRBUF_EQ(&sb, "%%");
+
+        i = 0;
+        strbuf_reset(&sb);
+        status = strbuf_expand(&sb, "%n", exp_inc, &i);
+        ASSERT_EQ(status, 0);
+        ASSERT_STRBUF_EQ(&sb, "0");
+
+        i = 8;
+        strbuf_reset(&sb);
+        status = strbuf_expand(&sb, "%n %n %n %n", exp_inc, &i);
+        ASSERT_EQ(status, 0);
+        ASSERT_STRBUF_EQ(&sb, "8 9 10 11");
+
+        i = 0;
+        strbuf_reset(&sb);
+        status = strbuf_expand(&sb, "%x", exp_inc, &i);
+        ASSERT_NE(status, 0);
+
+        strbuf_destroy(&sb);
+}

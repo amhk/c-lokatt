@@ -118,3 +118,35 @@ void strbuf_addf(struct strbuf *sb, const char *fmt, ...)
         strbuf_vaddf(sb, fmt, ap);
         va_end(ap);
 }
+
+static const char *strchrnul(const char *s, int c)
+{
+        while (*s != c && *s != '\0') {
+                s++;
+        }
+        return s;
+}
+
+int strbuf_expand(struct strbuf *sb, const char *fmt, expand_fn func,
+                  void *userdata)
+{
+        const char *begin = fmt, *end;
+        for (;;) {
+                end = strchrnul(begin, '%');
+                strbuf_add(sb, begin, end - begin);
+                if (*end == '\0') {
+                        return 0;
+                }
+                begin = end + 1;
+                if (*begin == '%') {
+                        strbuf_addch(sb, '%');
+                        begin++;
+                } else {
+                        size_t i = func(sb, begin, userdata);
+                        if (i == 0) {
+                                return -1;
+                        }
+                        begin += i;
+                }
+        }
+}

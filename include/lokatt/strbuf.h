@@ -40,4 +40,9 @@ void strbuf_vaddf(struct strbuf *sb, const char *fmt, va_list ap);
 void strbuf_addf(struct strbuf *sb, const char *fmt, ...)
     __attribute__((__format__(__printf__, 2, 3)));
 
+typedef size_t (*expand_fn)(struct strbuf *sb, const char *pattern,
+                            void *userdata);
+int strbuf_expand(struct strbuf *sb, const char *fmt, expand_fn func,
+                  void *userdata);
+
 #endif
