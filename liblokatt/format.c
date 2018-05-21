@@ -2,6 +2,8 @@
 
 #include "lokatt/format.h"
 
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+
 struct userdata_ {
         const struct logcat_entry *entry;
 };
@@ -16,23 +18,31 @@ struct context {
                KEY_TAG,
                KEY_TEXT,
         } keyword;
+        int padding;
 };
 
-static void update_context(struct context *ctx, const char *keyword, size_t len)
+static void update_context(struct context *ctx, const struct strbuf *word)
 {
-        if (!strncmp("pid", keyword, len)) {
+        char *end;
+        int padding = strtol(word->buf, &end, 10);
+        if (*end == '\0') {
+                ctx->padding = padding;
+                return;
+        }
+
+        if (!strncmp("pid", word->buf, word->str_size)) {
                 ctx->keyword = KEY_PID;
-        } else if (!strncmp("tid", keyword, len)) {
+        } else if (!strncmp("tid", word->buf, word->str_size)) {
                 ctx->keyword = KEY_TID;
-        } else if (!strncmp("sec", keyword, len)) {
+        } else if (!strncmp("sec", word->buf, word->str_size)) {
                 ctx->keyword = KEY_SEC;
-        } else if (!strncmp("nsec", keyword, len)) {
+        } else if (!strncmp("nsec", word->buf, word->str_size)) {
                 ctx->keyword = KEY_NSEC;
-        } else if (!strncmp("level", keyword, len)) {
+        } else if (!strncmp("level", word->buf, word->str_size)) {
                 ctx->keyword = KEY_LEVEL;
-        } else if (!strncmp("tag", keyword, len)) {
+        } else if (!strncmp("tag", word->buf, word->str_size)) {
                 ctx->keyword = KEY_TAG;
-        } else if (!strncmp("text", keyword, len)) {
+        } else if (!strncmp("text", word->buf, word->str_size)) {
                 ctx->keyword = KEY_TEXT;
         }
 }
@@ -40,50 +50,74 @@ static void update_context(struct context *ctx, const char *keyword, size_t len)
 static void expand_context(struct context *ctx,
                            const struct logcat_entry *entry, struct strbuf *out)
 {
+        struct strbuf sb = STRBUF_INIT;
+
+        // expand word
         switch (ctx->keyword) {
         case KEY_PID:
-                strbuf_addf(out, "%d", entry->pid);
+                strbuf_addf(&sb, "%d", entry->pid);
                 break;
         case KEY_TID:
-                strbuf_addf(out, "%d", entry->tid);
+                strbuf_addf(&sb, "%d", entry->tid);
                 break;
         case KEY_SEC:
-                strbuf_addf(out, "%d", entry->sec);
+                strbuf_addf(&sb, "%d", entry->sec);
                 break;
         case KEY_NSEC:
-                strbuf_addf(out, "%d", entry->nsec);
+                strbuf_addf(&sb, "%d", entry->nsec);
                 break;
         case KEY_LEVEL:
                 switch (entry->level) {
                 case LOGCAT_VERBOSE:
-                        strbuf_addch(out, 'V');
+                        strbuf_addch(&sb, 'V');
                         break;
                 case LOGCAT_DEBUG:
-                        strbuf_addch(out, 'D');
+                        strbuf_addch(&sb, 'D');
                         break;
                 case LOGCAT_INFO:
-                        strbuf_addch(out, 'I');
+                        strbuf_addch(&sb, 'I');
                         break;
                 case LOGCAT_WARNING:
-                        strbuf_addch(out, 'W');
+                        strbuf_addch(&sb, 'W');
                         break;
                 case LOGCAT_ERROR:
-                        strbuf_addch(out, 'E');
+                        strbuf_addch(&sb, 'E');
                         break;
                 case LOGCAT_ASSERT:
-                        strbuf_addch(out, 'A');
+                        strbuf_addch(&sb, 'A');
                         break;
                 }
                 break;
         case KEY_TAG:
-                strbuf_addf(out, "%s", entry->tag);
+                strbuf_addf(&sb, "%s", entry->tag);
                 break;
         case KEY_TEXT:
-                strbuf_addf(out, "%s", entry->text);
+                strbuf_addf(&sb, "%s", entry->text);
                 break;
         case KEY_NONE:
                 break;
         }
+
+        // add padding
+        static char SPACE[] = "        ";
+        if (ctx->padding < 0) {
+                int spaces = -ctx->padding - sb.str_size;
+                while (spaces > 0) {
+                        int step = MIN(spaces, (int)sizeof(SPACE) - 1);
+                        strbuf_add(&sb, SPACE, step);
+                        spaces -= step;
+                }
+        } else if (ctx->padding > 0) {
+                int spaces = ctx->padding - sb.str_size;
+                while (spaces > 0) {
+                        int step = MIN(spaces, (int)sizeof(SPACE) - 1);
+                        strbuf_insert(&sb, 0, SPACE, step);
+                        spaces -= step;
+                }
+        }
+
+        strbuf_add(out, sb.buf, sb.str_size);
+        strbuf_destroy(&sb);
 }
 
 static size_t parse_pattern(struct strbuf *sb, const char *pattern,
@@ -95,9 +129,10 @@ static size_t parse_pattern(struct strbuf *sb, const char *pattern,
 
         const struct logcat_entry *entry =
             ((struct userdata_ *)userdata)->entry;
-        struct context ctx = {KEY_NONE};
+        struct context ctx = {KEY_NONE, 0};
         const char *begin = pattern;
         const char *end;
+        struct strbuf word = STRBUF_INIT;
 
         for (;;) {
                 end = strpbrk(begin, " )");
@@ -106,7 +141,9 @@ static size_t parse_pattern(struct strbuf *sb, const char *pattern,
                 }
 
                 if (end - begin > 0) {
-                        update_context(&ctx, begin, end - begin);
+                        strbuf_reset(&word);
+                        strbuf_add(&word, begin, end - begin);
+                        update_context(&ctx, &word);
                 }
 
                 if (*end == ')') {
@@ -117,6 +154,7 @@ static size_t parse_pattern(struct strbuf *sb, const char *pattern,
         }
 
         expand_context(&ctx, entry, sb);
+        strbuf_destroy(&word);
         return end - pattern + 2; // '(' + words + ')'
 }
 

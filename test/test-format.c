@@ -74,3 +74,27 @@ TEST(format, expand_each_entry_field)
 
         strbuf_destroy(&sb);
 }
+
+TEST(format, expand_padding)
+{
+        struct strbuf sb = STRBUF_INIT;
+
+        int status = format_expand_logcat_entry(&sb, "%(pid 4)", &entry);
+        ASSERT_EQ(status, 0);
+        ASSERT_EQ(strcmp(sb.buf, "   1"), 0);
+
+        strbuf_reset(&sb);
+        status = format_expand_logcat_entry(&sb, "%(pid -4)", &entry);
+        ASSERT_EQ(status, 0);
+        ASSERT_EQ(strcmp(sb.buf, "1   "), 0);
+
+        status = format_expand_logcat_entry(&sb, "%(tag -10)", &entry);
+        ASSERT_EQ(status, 0);
+        ASSERT_EQ(strcmp(sb.buf, "1   some-tag  "), 0);
+
+        status = format_expand_logcat_entry(&sb, "*%(2 level)*", &entry);
+        ASSERT_EQ(status, 0);
+        ASSERT_EQ(strcmp(sb.buf, "1   some-tag  * D*"), 0);
+
+        strbuf_destroy(&sb);
+}
