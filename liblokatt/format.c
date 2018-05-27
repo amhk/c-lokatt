@@ -19,6 +19,11 @@ struct context {
                KEY_TEXT,
         } keyword;
         int padding;
+        enum { TRUNC_NONE,
+               TRUNC_LEFT,
+               TRUNC_MIDDLE,
+               TRUNC_RIGHT,
+        } truncate;
 };
 
 static void update_context(struct context *ctx, const struct strbuf *word)
@@ -44,6 +49,12 @@ static void update_context(struct context *ctx, const struct strbuf *word)
                 ctx->keyword = KEY_TAG;
         } else if (!strncmp("text", word->buf, word->str_size)) {
                 ctx->keyword = KEY_TEXT;
+        } else if (!strncmp("ltrunc", word->buf, word->str_size)) {
+                ctx->truncate = TRUNC_LEFT;
+        } else if (!strncmp("mtrunc", word->buf, word->str_size)) {
+                ctx->truncate = TRUNC_MIDDLE;
+        } else if (!strncmp("rtrunc", word->buf, word->str_size)) {
+                ctx->truncate = TRUNC_RIGHT;
         }
 }
 
@@ -116,6 +127,36 @@ static void expand_context(struct context *ctx,
                 }
         }
 
+        // truncate
+        const size_t width = abs(ctx->padding);
+        if (width > 2 && width < sb.str_size) {
+                switch (ctx->truncate) {
+                case TRUNC_NONE:
+                        break;
+                case TRUNC_LEFT:
+                        sb.buf[0] = '.';
+                        sb.buf[1] = '.';
+                        memmove(sb.buf + 2, sb.buf + sb.str_size - width + 2,
+                                width - 2);
+                        strbuf_shrink(&sb, width);
+                        break;
+                case TRUNC_MIDDLE: {
+                        const size_t r = width / 2 - 1;
+                        const size_t l = width - r - 1;
+                        sb.buf[l - 1] = '.';
+                        sb.buf[l] = '.';
+                        memmove(sb.buf + l + 1, sb.buf + sb.str_size - r, r);
+                        strbuf_shrink(&sb, width);
+                        break;
+                } break;
+                case TRUNC_RIGHT:
+                        strbuf_shrink(&sb, width - 2);
+                        strbuf_addstr(&sb, "..");
+                        break;
+                }
+        }
+
+        // write result
         strbuf_add(out, sb.buf, sb.str_size);
         strbuf_destroy(&sb);
 }
@@ -129,7 +170,7 @@ static size_t parse_pattern(struct strbuf *sb, const char *pattern,
 
         const struct logcat_entry *entry =
             ((struct userdata_ *)userdata)->entry;
-        struct context ctx = {KEY_NONE, 0};
+        struct context ctx = {KEY_NONE, 0, TRUNC_NONE};
         const char *begin = pattern;
         const char *end;
         struct strbuf word = STRBUF_INIT;
