@@ -84,7 +84,7 @@ test-valgrind: $(TEST_BINARY)
 	@$(VALGRIND) $(VALGRIND_FLAGS) --suppressions=.test.supp $(TEST_BINARY) --filter=$(T)
 
 test-gdb: $(TEST_BINARY)
-	@gdb --quiet --ex 'set follow-fork-mode child' --ex 'run' --args $(TEST_BINARY) --gdb --filter=$(T)
+	@gdb --quiet --ex 'set follow-fork-mode child' --args $(TEST_BINARY) --gdb --filter=$(T)
 
 run: $(LOKATT_BINARY)
 	@$(LOKATT_BINARY) test/data/pixel-2-android-p-developer-preview-easter-egg.bin
