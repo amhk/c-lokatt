@@ -5,17 +5,22 @@
 #include <ncurses.h>
 
 #include "lokatt/error.h"
+#include "lokatt/format.h"
 #include "lokatt/repo.h"
+#include "lokatt/strbuf.h"
 #include "lokatt/window.h"
 #include "lokatt/wrappers.h"
 
 struct window {
         size_t x, y, cols, rows;
         size_t lineno;
-        buffer_t buffer;
-        char *buf;
 
+        buffer_t buffer;
         WINDOW *window;
+
+        // scratch areas
+        char *buf;
+        struct strbuf strbuf;
 };
 
 window_t window_create(size_t x, size_t y, size_t cols, size_t rows)
@@ -35,6 +40,7 @@ window_t window_create(size_t x, size_t y, size_t cols, size_t rows)
         win->lineno = 0;
         win->buffer = NO_BUFFER;
         win->buf = xalloc(cols);
+        strbuf_init(&win->strbuf, rows);
 
         if ((win->window = newwin(rows, cols, y, x)) == NULL) {
                 die("newwin");
@@ -51,6 +57,7 @@ void window_destroy(window_t w)
         struct window *win = (struct window *)w;
         delwin(win->window);
         xfree(win->buf);
+        strbuf_destroy(&win->strbuf);
         xfree(win);
 }
 
@@ -77,8 +84,11 @@ static void printw_logcat(struct window *win, size_t lineno, int y)
                 // NULL if the repo has reclaimed memory)
                 die("buffer_logcat_peek");
         }
-        snprintf(win->buf, win->cols, "%4d %4d %d %-10s %s", entry->pid,
-                 entry->tid, entry->level, entry->tag, entry->text);
+        static const char *fmt =
+            "%(4 pid)  %(4 tid)  %(-20 rtrunc tag)  %(text)";
+        strbuf_reset(&win->strbuf);
+        format_expand_logcat_entry(&win->strbuf, fmt, entry);
+        snprintf(win->buf, win->cols, "%s", win->strbuf.buf);
         mvwprintw(win->window, y, 0, win->buf);
 }
 
